@@ -1,0 +1,44 @@
+---
+title: "01-rmd-example"
+author: "soufiane DJEBBAR"
+date: "17 juin 2018"
+output: html_document
+---
+
+
+## Introduction 
+This is a simple analysis of the New York Air Quality Measurements using the R statistical programming language. As stated in the helpfile `?airquality`, this dataset contains:
+
+```{r include = T}
+library(datasets)
+data("airquality")
+```
+Description : "Daily air quality measurements in New York, May to September 1973".
+
+A data frame with 154 observations on 6 variables. 
+
+- Ozone : numeric Ozone (ppb)
+
+- Solar.R : numeric Solar R (lang)
+
+- Wind : numeric Wind (mph)
+
+- Temp : numeric Temperature (degrees F)
+
+- Month : numeric Month (1--12)
+
+- Day : numeric Day of month (1--31) 
+
+plot of ozone and solar radiation 
+
+```{r include = T}
+plot(airquality$Ozone,airquality$Solar.R,xlab = "Ozone",ylab = "Solar.R",
+     col = 3, pch = "*")
+```
+
+plot of ozone and temperature
+
+```{r include = T}
+plot(airquality$Ozone,airquality$Temp, xlab = "Ozone",ylab = "temperature")
+```
+
