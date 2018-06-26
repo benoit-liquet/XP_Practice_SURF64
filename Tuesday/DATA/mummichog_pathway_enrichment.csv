@@ -1,0 +1,42 @@
+"","Pathway total","Hits.total","Hits.sig","EASE","FET","Gamma"
+"Terpenoid backbone biosynthesis",10,6,4,0.10327,0.018296,0.0002654
+"Tyrosine metabolism",25,13,5,0.26453,0.10715,0.00070728
+"Vitamin B6 metabolism",8,6,3,0.35506,0.10505,0.0012424
+"Glycerophospholipid metabolism",24,7,3,0.43532,0.1569,0.0020684
+"Glycerolipid metabolism",9,3,2,0.49662,0.10906,0.0030783
+"Aminoacyl-tRNA biosynthesis",66,19,5,0.56528,0.34901,0.0048566
+"Alanine, aspartate and glutamate metabolism",20,14,4,0.5694,0.3205,0.0049935
+"Purine metabolism",54,26,6,0.64065,0.45171,0.0081487
+"Amino sugar and nucleotide sugar metabolism",27,16,4,0.66628,0.42464,0.0097668
+"Pyruvate metabolism",18,5,2,0.68204,0.27404,0.010934
+"Sulfur metabolism",7,5,2,0.68204,0.27404,0.010934
+"Glutathione metabolism",25,12,3,0.73934,0.46219,0.016684
+"Citrate cycle (TCA cycle)",20,6,2,0.74744,0.35853,0.017742
+"Cysteine and methionine metabolism",26,13,3,0.78013,0.52016,0.02287
+"Glycolysis or Gluconeogenesis",25,14,3,0.81525,0.57462,0.030406
+"Glycine, serine and threonine metabolism",22,11,2,0.92057,0.69636,0.082047
+"Arginine and proline metabolism",28,15,2,0.96873,0.84836,0.15655
+"Pyrimidine metabolism",40,26,2,0.99767,0.98209,0.36518
+"Fructose and mannose metabolism",20,13,1,1,0.95127,1
+"Galactose metabolism",13,10,1,1,0.9016,1
+"Ascorbate and aldarate metabolism",6,4,1,1,0.60269,1
+"Ubiquinone and other terpenoid-quinone biosynthesis",5,4,1,1,0.60269,1
+"Valine, leucine and isoleucine degradation",38,7,1,1,0.80194,1
+"Valine, leucine and isoleucine biosynthesis",13,8,1,1,0.84307,1
+"Histidine metabolism",8,3,1,1,0.49929,1
+"Phenylalanine metabolism",8,4,1,1,0.60269,1
+"Tryptophan metabolism",29,10,1,1,0.9016,1
+"Phenylalanine, tyrosine and tryptophan biosynthesis",4,4,1,1,0.60269,1
+"beta-Alanine metabolism",12,4,1,1,0.60269,1
+"Taurine and hypotaurine metabolism",6,3,1,1,0.49929,1
+"D-Arginine and D-ornithine metabolism",4,3,1,1,0.49929,1
+"Starch and sucrose metabolism",19,11,1,1,0.92212,1
+"Inositol phosphate metabolism",22,10,1,1,0.9016,1
+"Glyoxylate and dicarboxylate metabolism",10,3,1,1,0.49929,1
+"Propanoate metabolism",19,2,1,1,0.36921,1
+"Butanoate metabolism",19,8,1,1,0.84307,1
+"Methane metabolism",9,6,1,1,0.75012,1
+"Thiamine metabolism",5,1,1,1,0.20563,1
+"Nicotinate and nicotinamide metabolism",9,5,1,1,0.68485,1
+"Folate biosynthesis",14,6,1,1,0.75012,1
+"Porphyrin and chlorophyll metabolism",11,2,1,1,0.36921,1
