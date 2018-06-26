@@ -1,8 +1,11 @@
 # Tuesday Lectures
 
-## Data presentation project
+## Data and annotation information on project
 
 - Overview on the data [here](Data_overview.pdf)
+
+- Annotations of gene expression and methylation are available on the folder **Annotations**
+
 
 ## Big Data Visualisation
 
