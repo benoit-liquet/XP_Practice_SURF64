@@ -4,6 +4,8 @@
 
 - Overview on the data [here](Data_overview.pdf)
 
+- PEM slides are available [here](PEM_slides.pdf)
+
 - Annotations of gene expression and methylation are available on the folder **Annotations**
 
 ## Example of Data management of PEM data
