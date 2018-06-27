@@ -15,7 +15,9 @@
 ## Big Data Visualisation
 
 - Lecture from Garry  is available [here](Exposome-Introduction-Anglet-Miller.pdf)
- 
+
+- Gary has just added some nice ressources in the folder **GARY_ressources**
+
 ## Resampling Stability Selection
 
 - Lecture from Lutzen  is available [here](Resampling_Stability_Selection.pdf)
