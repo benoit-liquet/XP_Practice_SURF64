@@ -1,0 +1,131 @@
+---
+title: 'Exposome: supervised analysis of the transcriptomics data'
+author: "Julien Chiquet"
+date: "June 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+## Required packages
+
+```{r}
+library(tidyverse)
+library(glmnet)
+library(stabs)
+```
+
+## Data preparation
+
+Import the data
+```{r}
+covariates  <- read_delim("Covariates.txt" , delim = "\t") %>% dplyr::select(-subjectidp1)
+exposures   <- read_delim("Exposures.txt"  , delim = "\t") %>% dplyr::select(-subjectidp1)
+transcripts <- readRDS("Transcripts.rds") %>% as_tibble(rownames = "subjectidp")
+```
+
+Merge covariates and exposures and retain rows shared by all tables
+```{r}
+covar_expos <- left_join(covariates, exposures, by = "subjectidp")
+transcripts <- semi_join(transcripts, covar_expos, by = "subjectidp")
+```
+
+## Principal component Analysis
+
+A basic PCA indicates that the city variable has a strong effect:
+```{r}
+library(FactoMineR)
+pca_transcrit   <- PCA(dplyr::select(transcripts, -subjectidp), graph = FALSE)
+```
+
+```{r, echo = FALSE}
+colors <- factor(covar_expos$city)
+
+par(mfrow=c(2,2))
+barplot(pca_transcrit$eig[1:10, 3], las = 3)
+plot(pca_transcrit, axes = c(1,2), choix = "ind", col.ind = colors)
+plot(pca_transcrit, axes = c(1,3), choix = "ind", col.ind = colors)
+plot(pca_transcrit, axes = c(2,3), choix = "ind", col.ind = colors)
+```
+
+## Filtering before predicting `modeledpm25`
+
+I choose to predict the `modeledpm25` response. I thus filter the row corresponding to NA values in `modeledpm25` in both the covariates/exposome variables and the table of transcripts.
+
+```{r}
+covar_expo_transcript <- semi_join(
+  filter(covar_expos, !is.na(modeledpm25)), transcripts
+  )
+expr <- dplyr::select(semi_join(transcripts, covar_expo_transcript, "subjectidp"), -subjectidp)
+response <- pull(covar_expo_transcript, modeledpm25) 
+```
+
+## Variable screening: retain the most varying transcrit
+
+Basic screening based on the variance of the transcrits, only keeping the first - says - 2000.
+```{r}
+nvar <- 2000
+vars <- order(apply(as.matrix(expr), 2, var, na.rm = TRUE), decreasing = TRUE)
+expr_sub <- as.matrix(expr[, vars[1:nvar]])
+```
+
+The design matrix is composed by the city variable (dummy coding) + the transcript.
+```{r}
+X <- cbind(model.matrix(~ covar_expo_transcript$city + 0), scale(expr_sub))
+```
+
+## Variable section with the LASSO
+
+I try the LASSO without penalizing the city effect
+
+```{r}
+penalties <- c(rep(0, 4), rep(1, ncol(X)-4))
+## now launch glmnet
+out_cv_glmnet <- cv.glmnet(X, response, standardize = FALSE, penalty.factor = penalties)
+```
+
+```{r, echo = FALSE}
+par(mfrow= c(1,2))
+plot(out_cv_glmnet)
+plot(out_cv_glmnet$glmnet.fit)
+```
+
+Obviously the transcripts effects are essentially masked by the city effect: we prefer performin variable seleciton on each data subset separatly.
+
+## Variable selection per city
+
+```{r}
+expr_city <- lapply(split(expr_sub, covar_expo_transcript$city), matrix, ncol = ncol(expr_sub))
+response_city <- split(response, covar_expo_transcript$city)
+```
+
+```{r}
+out_cv_glmnet_city <- Map(cv.glmnet, expr_city, response_city)
+```
+
+```{r}
+par(mfrow = c(2,4))
+lapply(out_cv_glmnet_city, plot)
+lapply(out_cv_glmnet_city, function(x) plot(x$glmnet.fit))
+```
+
+There seems to be some signal, so let us try some stability selection approach.
+
+## Stability Selection
+
+```{r}
+my_stabs <- function(x, y) {
+  stabsel(x = x, y = y, fitfun = glmnet.lasso, cutoff = 0.75, PFER = 1)
+}
+stability_sel <- Map(my_stabs, expr_city, response_city)
+```
+
+An the winners are
+```{r}
+print(lapply(stability_sel, function(x) colnames(expr_sub)[x$selected]))
+```
+
+

@@ -1,0 +1,219 @@
+---
+title: "Basic Network Analysis of the transcriptomics exposome data set"
+author: "Julien Chiquet"
+date: "June 27, 2018"
+output: 
+  html_document:
+    toc: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+# Required packages
+
+```{r}
+library(tidyverse)
+library(huge)
+library(QUIC)
+library(stabs)
+library(limma)
+library(igraph)
+```
+
+# Data preparation
+
+## Data importation
+```{r}
+covariates  <- read_delim("Covariates.txt" , delim = "\t") %>% dplyr::select(-subjectidp1)
+transcripts <- readRDS("Transcripts.rds") %>% as_tibble(rownames = "subjectidp")
+```
+
+## Merging tables
+
+Merge covariates and exposures and retain rows shared by all tables. Extract the city variable.
+```{r}
+expr <- semi_join(transcripts, covariates, by = "subjectidp") %>% dplyr::select(-subjectidp)
+city <- semi_join(covariates, transcripts, by = "subjectidp") %>% pull(city)
+```
+
+## Selecting Cities
+
+Regarding the sampling distribution of the cities,
+```{r}
+table(city)
+```
+we only keep Basel, Turin and Utrect for the example.
+
+```{r}
+expr <- filter(expr, city %in% c("Basel", "Turin", "Utrect"))
+city <- city[city %in% c("Basel", "Turin", "Utrect")]
+```
+
+# Principal Component Analysis
+
+A basic PCA indicates that the city variable has a strong effect:
+```{r}
+library(FactoMineR)
+pca_expr   <- PCA(expr, graph = FALSE)
+```
+
+```{r, echo = FALSE}
+colors <- factor(city)
+
+par(mfrow=c(2,2))
+barplot(pca_expr$eig[1:10, 3], las = 3)
+plot(pca_expr, axes = c(1,2), choix = "ind", col.ind = colors)
+legend("topleft", levels(colors), col = 1:3, pch = 15)
+plot(pca_expr, axes = c(1,3), choix = "ind", col.ind = colors)
+plot(pca_expr, axes = c(2,3), choix = "ind", col.ind = colors)
+```
+
+# Variable screening: differential analysis with Limma
+
+## Differential analysis with Limma
+
+```{r}
+design <- model.matrix(~ 0 + city)
+colnames(design) <- c("Basel", "Turin", "Utrect")
+fit <- lmFit(t(expr), design)
+contrast.matrix <- makeContrasts(
+  Basel   - Turin  ,
+  Basel   - Utrect ,
+  Turin   - Utrect ,
+  levels = design)
+fit2 <- contrasts.fit(fit, contrast.matrix)
+fit2 <- eBayes(fit2)
+```
+
+```{r}
+topTable(fit2, coef=1, adjust="BH")
+
+```
+
+
+```{r}
+results <- decideTests(fit2, p.value = 1e-5)
+vennDiagram(results)
+```
+
+Still too many guys to perform network inference properly !!
+
+We only keep the first 50 more variants guys among the differentially expressed transcripts.
+
+```{r}
+expr_DF <- expr[, which(rowSums(abs(results)) == 3)]
+expr_sub <- expr_DF[, order(apply(expr_DF, 2, var), decreasing = TRUE)[1:50]]
+heatmap(as.matrix(expr_sub))
+```
+
+# Network Analysis
+
+## Network inference with Neighborhood Selection
+
+We split the data set into three part (one per city) and perform network inference
+```{r}
+expr_city <- lapply(split(expr_sub, city), as.matrix)
+networks <- Map(huge, expr_city)
+```
+
+```{r}
+lapply(networks, plot)
+```
+
+### StARS for Neighorhood selection
+
+```{r}
+StARS_analysis <- lapply(networks, huge.select, criterion ="stars", verbose = FALSE)
+```
+
+```{r}
+empty <- lapply(StARS_analysis, plot)
+```
+
+
+### Any structure in the networks ?
+
+#### Turin network
+
+```{r}
+A <- StARS_analysis[[2]]$refit
+colnames(A) <- rownames(A) <- colnames(expr_sub)
+G_Turin <- graph_from_adjacency_matrix(A, mode = "undirected")
+plot(cluster_fast_greedy(G_Turin), G_Turin)
+```
+
+#### Utrect network
+
+```{r}
+A <- StARS_analysis[[3]]$refit
+colnames(A) <- rownames(A) <- colnames(expr_sub)
+G_Utrect <- graph_from_adjacency_matrix(A, mode = "undirected")
+plot(cluster_fast_greedy(G_Utrect), G_Utrect)
+```
+
+### Intersection and differences between Turin / UTrect
+
+```{r}
+G_inter <- graph.intersection(G_Turin, G_Utrect)
+plot(cluster_fast_greedy(G_inter), G_inter, main = "intersection")
+```
+
+```{r}
+G_diff <- graph.difference(G_Turin, G_Utrect)
+plot(cluster_fast_greedy(G_diff), G_diff, main = "difference")
+
+```
+
+
+## Stability Selection and Graphical Lasso
+
+We try an alternative solution both for network inference and resampling process, using the graphical-Lasso (from the *quick* package) and the stability selection approach as implemented n the package *stabs*.
+
+```{r}
+stab_out <- lapply(expr_city, stabsel, fitfun = "quic.graphical_model", cutoff = 0.75, PFER = 10)
+```
+
+```{r}
+par(mfrow=c(2,3))
+null <- lapply(stab_out, plot, type = "paths", print.all = FALSE, labels = 1:50, main = "path") 
+null <- lapply(stab_out, plot, print.all = FALSE, labels = 1:50, main = "selection")
+```
+
+## Extract network for each city
+
+```{r}
+G_list <- lapply(stab_out, function(stabs) {
+  graph_from_edgelist(
+    do.call(rbind, strsplit(names(stabs$selected), " : ")),
+    directed = FALSE
+  )
+})
+```
+
+## Look a some structure and compare the network
+
+```{r}
+plot(cluster_fast_greedy(G_list[[1]]), G_list[[1]], main = "Basel")
+plot(cluster_fast_greedy(G_list[[2]]), G_list[[2]], main = "Turin")
+plot(cluster_fast_greedy(G_list[[3]]), G_list[[3]], main = "Utrect")
+```
+
+## Intersection/differences Networks
+
+```{r}
+G_inter <- graph.intersection(G_list[[1]], G_list[[2]])
+plot(cluster_fast_greedy(G_inter), G_inter, main = "intersection Basel/Turin")
+
+```
+
+This remains quite exploratory ! Everything needs to be put in perspective with, say, the proteomic data set. So it is your turn!
+
+# Session Info
+
+```{r}
+sessionInfo()
+```
+
