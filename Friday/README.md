@@ -7,4 +7,4 @@
 
 ## Please we need you to improve this summer school
 
-Could you fill this ![Survey](https://imperial.eu.qualtrics.com/jfe/form/SV_5aOPzQpL8GZOdVP)
+Could you fill this survey https://imperial.eu.qualtrics.com/jfe/form/SV_5aOPzQpL8GZOdVP
